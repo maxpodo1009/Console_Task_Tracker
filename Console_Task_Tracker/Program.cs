@@ -2,17 +2,19 @@
 
 namespace Console_Task_Tracker;
 
-public class TaskItem //инструкция для json
+//инструкция для json
+public class TaskItem
 {
     public int ID { get; set; }
     public string Name { get; set; }
+    public DateTime CreatedDate { get; set; } 
 }
 
 class Program
 {
     static void Main(string[] args)
     {
-        List<TaskItem> myTasks = Calljson();
+        List<TaskItem> myTasks = CallJson();
 
         while (true)
         {
@@ -24,135 +26,217 @@ class Program
                           "1. Добавить \n" +
                           "2. Изменить \n" +
                           "3. Удалить \n" +
+                          "4. Выйти из программы \n" +
                           "Введите любой другой символ или нажмите Enter чтобы закрыть программу: ");
             string number = Console.ReadLine();
-            Console.WriteLine("---------------------------------");
-            
-            if (number == "1")
-                AddTask(myTasks);
-        
-            else if (number == "2")
-                ActionSelection(myTasks);
-            
-            else if (number == "3")
-                Delete(myTasks);
+            Console.WriteLine(new string('-', 45));
 
-            else
+            switch (number)
             {
-                Console.WriteLine("Программа завершила работу.");
-                break;
+                case "1":
+                {
+                    AddTask(myTasks);
+                    hold();
+                    break;
+                }
+                case "2":
+                {
+                    ActionSelection(myTasks);
+                    hold();
+                    break;
+                }
+                case "3":
+                {
+                    Delete(myTasks);
+                    hold();
+                    break;
+                }
+                case "4":
+                {
+                    Console.WriteLine("Программа завершила работу");
+                    return;
+                }
+                default:
+                {
+                    Console.WriteLine("[Ошибка]: Неккоретное значение");
+                    hold();
+                    break;
+                }
             }
-
         }
     }
 
-
-    static void PrintTasks(List<TaskItem> list) //вывод
+    //Вывод
+    static void PrintTasks(List<TaskItem> list)
     {
-        Console.WriteLine("---------------------------------");
-        Console.WriteLine("Вот список ваших задач: ");
-        foreach (var task in list)
-            Console.WriteLine($"[{task.ID}] {task.Name}");
-        Console.WriteLine("---------------------------------");
+        Console.WriteLine(new string('-', 45));
+        Console.WriteLine("{0, -5} | {1, -20} | {2, -15}", "ID", "Название", "Дата создания");
+        if (list.Count == 0) Console.WriteLine("Пусто");
+        foreach (var task in list)  
+        {
+            Console.WriteLine("{0, -5} | {1, -20} | {2, -15:dd.MM HH:mm}", task.ID, task.Name,  task.CreatedDate);
+        }
+        Console.WriteLine(new string('-', 45));
     }
 
-    
-    static List<TaskItem> Calljson()//Сериализация/Десириализация
+    //Сериализация/Десириализация
+    static List<TaskItem> CallJson()
     {
-        List<TaskItem> NameNote = new List<TaskItem>();
-        
-        if (File.Exists("name.json"))
+        try
         {
+            if (!File.Exists("name.json")) return new List<TaskItem>();
+
             string json = File.ReadAllText("name.json");
-            NameNote = JsonSerializer.Deserialize<List<TaskItem>>(json);
-            return NameNote;
+            return JsonSerializer.Deserialize<List<TaskItem>>(json) ?? new List<TaskItem>();
         }
-        else
+        catch (Exception e)
         {
-            string json = JsonSerializer.Serialize(NameNote);
-            File.WriteAllText("name.json", json);
-            return NameNote;
+            Console.WriteLine($"[Ошибка при загрузке]: {e.Message}");
+            return new List<TaskItem>();
         }
-        
     }
 
-
-    static void ActionSelection(List<TaskItem> list)//Изменение имени
+    //Сохранение изменений
+    static void SavingChanges(List<TaskItem> list)
     {
-        Console.Write("Введите номер задачи которую хотите изменить: ");
-        int id = Convert.ToInt32(Console.ReadLine());
-        bool found = false;
-        Console.WriteLine("---------------------------------");
-
-        for (int n = 0; n < list.Count; n++)
-        {
-            if (id == list[n].ID)
-            {
-                Console.Write($"Вы ввели задачу: {list[n].Name} \nВведите новое название: ");
-                list[n].Name = Console.ReadLine();
-                Console.WriteLine("---------------------------------");
-                
-                Console.Write($"Задача обновлена: {list[n].ID} теперь называется {list[n].Name}\n");
-
-                string updatedJson = JsonSerializer.Serialize(list);
-                File.WriteAllText("name.json", updatedJson);
-                
-                found = true;
-                break;
-            }
-        }
-        if (!found)
-            Console.WriteLine("Вы ввели некорретный номер задачи");
+        string updatedJson = JsonSerializer.Serialize(list);
+        File.WriteAllText("name.json", updatedJson);
     }
-
-    static void AddTask(List<TaskItem> list)//Добавление имени
+    
+    //Удержание консоли
+    static void hold()
+    {
+        Console.WriteLine("Нажмите Enter чтобы продолжить");
+        Console.ReadKey();
+    }
+    
+    //Добавление задачи
+    static void AddTask(List<TaskItem> list)
     {
         Console.Write("Введите имя задачи: ");
-        string? title = Console.ReadLine();
+        string title = Console.ReadLine()?.Trim();
+
+        if (string.IsNullOrEmpty(title))
+        {
+            Console.WriteLine("[Ошибка] Имя задачи не может быть пустым");
+            return;
+        }
  
         //новая задача
-        TaskItem newTask = new TaskItem();
-        newTask.Name = title;
-        newTask.ID = list.Any() ? list.Max(t => t.ID) + 1 : 1;
+        TaskItem newTask = new TaskItem()
+        {
+            ID = list.Any() ? list.Max(t => t.ID) + 1 : 1,
+            Name = title,
+            CreatedDate = DateTime.Now
+        };
         
         //добавить в список
         list.Add(newTask);
         
         //Сохранить полученый список 
-        string updatedJson = JsonSerializer.Serialize(list);
-        File.WriteAllText("name.json", updatedJson);
+        SavingChanges(list);
+        
+        //Сообщение об успешности
+        Console.WriteLine($"Задача добавлена: {newTask.Name}");
+        Console.WriteLine(new string('-', 45));
+
     }
 
-    static void Delete(List<TaskItem> list) //Удаление
+    //Изменение задачи
+    static void ActionSelection(List<TaskItem> list)
+    {
+       Console.Write("Введите номер задачи который хотите изменить: ");
+       if (!int.TryParse(Console.ReadLine(), out int id))
+       {
+           Console.WriteLine("[Ошибка] Введите корретное значение. ID состоит из чисел");
+           Console.WriteLine(new string('-', 45));
+           return;
+       }
+
+       var TaskToUpdate = list.FirstOrDefault(t => t.ID == id);
+
+       if (TaskToUpdate == null)
+       {
+           Console.WriteLine($"[Ошибка] Задача с номером {id} не найдена в списке");
+           Console.WriteLine(new string('-', 45));
+           return;
+       }
+       
+       Console.WriteLine(new string('-', 45));
+       Console.WriteLine($"Текущее название: {TaskToUpdate.Name}");
+       Console.Write("Введите новое название: ");
+       
+       string NewName = Console.ReadLine()?.Trim();
+
+       if (string.IsNullOrEmpty(NewName))
+       {
+           Console.WriteLine("[Ошибка] Новое название не может быть пустым.");
+           Console.WriteLine(new string('-', 45));
+           return;
+       }
+
+       TaskToUpdate.Name = NewName;
+
+       try
+       {
+           SavingChanges(list);
+           Console.WriteLine(new string('-', 45));
+           Console.WriteLine($"Задача {id} обновленна на: {NewName}");
+           Console.WriteLine(new string('-', 45));
+
+       }
+       catch (Exception e)
+       {
+           Console.WriteLine($"[Ошибка при сохранении в файл]: {e.Message}");
+           Console.WriteLine(new string('-', 45));
+
+       }
+    }
+    
+    
+    //Удаление задачи
+    static void Delete(List<TaskItem> list) 
     {
         while (true)
         {
             Console.Write("Напишите какую задачу вы хотите удалить: ");
             string input = Console.ReadLine();
-            
-            if (input == "Exit") break;
 
+            if (string.IsNullOrEmpty(input))
+            {
+                Console.WriteLine("[Ошибка] Номер задачи не может быть пустым");
+                Console.WriteLine(new string('-', 45));
+                break;
+            }
+
+            
             if (int.TryParse(input, out int id))
             {
                 if (list.Any(t => t.ID == id))
                 {
                     list.RemoveAll(t => t.ID == id);
-                    Console.WriteLine("---------------------------------");
+                    Console.WriteLine(new string('-', 45));
 
-                    string updateJson = JsonSerializer.Serialize(list);
-                    File.WriteAllText("name.json", updateJson);
+                    SavingChanges(list);
 
                     Console.WriteLine($"Задача {id} была успешна удалена!");
+                    Console.WriteLine(new string('-', 45));
                     break;
                 }
                 else
                 {
-                    Console.WriteLine("Вы ввели некорретный ID, \n" +
-                                    "Напишите Exit, если хотите выйти с метода удаления заметки, или \n" +
-                                    "Нажмите Enter(либо любой другой символ) чтобы заново запустить метод удаления: ");
-                    if (Console.ReadLine() == "Exit")
-                        break;
+                    Console.WriteLine(new string('-', 45));
+                    Console.WriteLine("[Ошибка] Вы ввели некорретный ID");
+                    Console.WriteLine(new string('-', 45));
+
+                    break;
                 }
+            }
+            else
+            {
+                Console.WriteLine("[Ошибка] Вы ввели некорретный ID. ID состоит из чисел");
+                Console.WriteLine(new string('-', 45));
+                break;
             }
         }
     }

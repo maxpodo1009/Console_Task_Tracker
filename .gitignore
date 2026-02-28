@@ -6,3 +6,7 @@ obj/
 .idea/
 .DS_Store
 .idea/
+Console_Task_Tracker.sln.DotSettings.user
+bin/
+obj/
+.DS_Store
