@@ -19,8 +19,8 @@ class Program
             Console.Clear();
             PrintTasks(myTasks);
         
-            //Редактирование заметок
-            Console.Write("Введите цифру которая будет означать ваше действия для заметок \n" +
+            //Редактирование задач
+            Console.Write("Введите цифру которая будет означать ваше действия для задач \n" +
                           "1. Добавить \n" +
                           "2. Изменить \n" +
                           "3. Удалить \n" +
@@ -36,14 +36,13 @@ class Program
             
             else if (number == "3")
                 Delete(myTasks);
-            
+
             else
             {
                 Console.WriteLine("Программа завершила работу.");
                 break;
             }
-            Console.WriteLine("\nНажмите любую клавишу чтобы продолжить...");
-            Console.ReadKey();
+
         }
     }
 
@@ -80,7 +79,7 @@ class Program
 
     static void ActionSelection(List<TaskItem> list)//Изменение имени
     {
-        Console.Write("Введите номер заметки которую хотите изменить: ");
+        Console.Write("Введите номер задачи которую хотите изменить: ");
         int id = Convert.ToInt32(Console.ReadLine());
         bool found = false;
         Console.WriteLine("---------------------------------");
@@ -89,11 +88,11 @@ class Program
         {
             if (id == list[n].ID)
             {
-                Console.Write($"Вы ввели заметку: {list[n].Name} \nВведите новое название: ");
+                Console.Write($"Вы ввели задачу: {list[n].Name} \nВведите новое название: ");
                 list[n].Name = Console.ReadLine();
                 Console.WriteLine("---------------------------------");
                 
-                Console.Write($"Заметка обновлена: {list[n].ID} теперь называется {list[n].Name}\n");
+                Console.Write($"Задача обновлена: {list[n].ID} теперь называется {list[n].Name}\n");
 
                 string updatedJson = JsonSerializer.Serialize(list);
                 File.WriteAllText("name.json", updatedJson);
@@ -103,12 +102,12 @@ class Program
             }
         }
         if (!found)
-            Console.WriteLine("Вы ввели некорретный номер заметки");
+            Console.WriteLine("Вы ввели некорретный номер задачи");
     }
 
     static void AddTask(List<TaskItem> list)//Добавление имени
     {
-        Console.Write("Введите имя заметки: ");
+        Console.Write("Введите имя задачи: ");
         string? title = Console.ReadLine();
  
         //новая задача
@@ -128,7 +127,7 @@ class Program
     {
         while (true)
         {
-            Console.Write("Напишите какую строку вы хотите удалить: ");
+            Console.Write("Напишите какую задачу вы хотите удалить: ");
             string input = Console.ReadLine();
             
             if (input == "Exit") break;
@@ -143,7 +142,7 @@ class Program
                     string updateJson = JsonSerializer.Serialize(list);
                     File.WriteAllText("name.json", updateJson);
 
-                    Console.WriteLine($"Заметка {id} была успешна удалена!");
+                    Console.WriteLine($"Задача {id} была успешна удалена!");
                     break;
                 }
                 else
